@@ -19,14 +19,14 @@ root
 │ 
 ├── etl (Extract-Load-Transform data)
 │   ├── client_1_4
-|           └── initial_model.py, k_models.ipynb
-|
+|   |        └── initial_model.py, k_models.ipynb
+|   |
 │   ├── client_1_5
 |           └── Client1_5_ASmethod.py, Gapsquare_EDA_Client1_5.pdf, Gapsquare_KNN_Kmeans_Client1_5.Rmd, Gapsquare_Ridge_Lasso_Client1_5.pdf, KNN_KMeans.ipynb, KNN_KMeans.py, RidgeLassoPCA.py
-|
+|   |
 │   ├── client_a
-|           └── eda_stdifference.py, predict_salary_helper.py
-|
+|   |       └── eda_stdifference.py, predict_salary_helper.py
+|   |
 │   └── client_extra
 │         └── client_extra_analysis_ola_model.ipynb
 │         └── output
