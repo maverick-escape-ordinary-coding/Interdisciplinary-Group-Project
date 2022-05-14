@@ -1,0 +1,299 @@
+---
+Title: Gapsqaure Data Client 1.5
+Author: Lucy Primmer - lucy2.primmer@live.uwe.ac.uk
+RVersion: 4.0.3
+RStudio Version: 1.4.1103
+Platform: 'Platform: x86_64-apple-darwin17.0 (64-bit)'
+Operating System: Mac
+Output:
+  html_document: default
+  word_document: default
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+## Packages
+
+```{r, warning=FALSE, message=FALSE, include=FALSE}
+library(psych)
+library(corrplot)
+library(ade4)
+library(factoextra)
+library(paran)
+library(RMySQL)
+library(RPostgres)
+library(beeswarm)
+library(dplyr)
+library(tidyverse)
+```
+
+
+## Gapsquare
+
+```{r read_in_data, include=FALSE}
+client <- read.csv('client_1_5_as_model.csv')
+```
+
+```{r client_numeric}
+client$pay_label<-recode(client$pay_label, "underpaid" =0, "fairly_paid" = 1, 'overpaid'=2)
+client_numeric <- dplyr::select_if(client, is.numeric)
+#client_numeric <- client_numeric[,-1]
+#client_numeric
+#client_numeric <-client_numeric[-3,]
+#client_numeric3 <-client_numeric[c(-3,-4,-5,-7,-9,-13),]
+
+```
+
+Underpaid = 0  
+Overpaid = 2  
+Fairly_paid = 1  
+
+```{r corr}
+corrplot(cor(client_numeric[,c(-23)]), tl.col = 'black',type = "upper")
+```
+ 
+ 
+```{r client_distances}
+
+client.scaled <- scale(client_numeric)
+
+
+client_euc<-get_dist(client.scaled , method = "euclidean")
+#fviz_dist(client_euc, order=TRUE) 
+
+client_man<-get_dist(client.scaled , method = "manhattan") 
+#fviz_dist(client_man,order=TRUE)
+
+```
+
+Difficult to determine the k number from these plots  
+
+
+```{r client_clusters}
+fviz_nbclust(client.scaled,FUN=hcut,method="wss")
+fviz_nbclust(client.scaled, FUN = hcut, method = "silhouette")
+
+```
+
+
+```{r client_nn}
+client_euc_nn<-hclust(client_euc, method="single", members=NULL)
+client_man_nn<-hclust(client_man, method="single", members=NULL)
+
+plot(client_euc_nn, main="Client 1.5 Nearest Neighbour Euc")
+rect.hclust(client_euc_nn, k=2, border=2:3)
+
+plot(client_man_nn, main="Client 1.5 Nearest Neighbour Man")
+rect.hclust(client_man_nn, k=2, border=2:3)
+
+```
+
+
+```{r client_fn}
+client_euc_fn<-hclust(client_euc, method="complete", members=NULL)
+client_man_fn<-hclust(client_man, method="complete", members=NULL)
+
+plot(client_euc_fn, main="Client 1.5 Furthest Neighbour Euc")
+rect.hclust(client_euc_fn, k=2, border=2:3)
+
+plot(client_man_fn, main="Client 1.5 Furthest Neighbour Man")
+rect.hclust(client_man_nn, k=2, border=2:3)
+
+
+```
+
+
+```{r client_upgma}
+
+client_euc_av<-hclust(client_euc, method="average")
+client_man_av<-hclust(client_man, method="average")
+
+plot(client_euc_av, main="Client 1.5 UPGMA Euc")
+rect.hclust(client_euc_av, k=2, border=2:3)
+
+plot(client_man_av, main="Client 1.5 UPGMA Man")
+rect.hclust(client_man_av, k=2, border=2:3)
+
+```
+
+Employees in rows 3 and 13 seem to be affecting the cluster prints - they are more prominent in all of the neighbours analysis 
+Could be counted as outliers 
+
+
+```{r client_kmeans}
+set.seed(161)
+clust_km_client<-kmeans(client.scaled,2)
+#clust_km_client2<-kmeans(client.scaled2,2)
+#clust_km_client3<-kmeans(client.scaled3,3)
+
+plot(client_numeric$quasi_predicted_salary, client_numeric$hourly_salary,
+     xlab="quasi_predicted_salary", ylab="SalaryHourly", 
+     pch=clust_km_client$cluster, 
+     col=(clust_km_client$cluster+1))
+
+fviz_cluster(clust_km_client, client.scaled, ellipse.type = "norm")
+#fviz_cluster(clust_km_client2, client.scaled2, ellipse.type = "norm")
+#fviz_cluster(clust_km_client3, client.scaled3, ellipse.type = "norm")
+
+```
+
+
+The lower end salaries and the higher end salaries seem to form 2 separate clusters  
+
+
+```{r KMO_client}
+KMO(client_numeric)
+```
+
+
+### How many factors to retain?
+
+Using the scree plot and using the parallel analysis approach.
+
+
+```{r scree, echo=FALSE}
+scree(client_numeric) 
+```
+
+
+```{r paran, comment=NA}
+paran(client_numeric,iterations=5000) #suggests 5 components to retain
+paran(client_numeric,iterations=5000, centile=95) #suggests 5 components to retain
+```
+Suggested to retain  3 components 
+
+### PCA
+
+```{r PCA}
+clientpca<-dudi.pca(client_numeric,scannf = FALSE,nf=5)
+A<-fviz_pca_biplot(clientpca, repel = T, label="var", habillage= client_numeric$pay_label, axes=c(1,2), legend.title = "Pay_Label")
+B<-fviz_pca_biplot(clientpca, repel = T, label="var", habillage= client_numeric$pay_label, axes=c(1,3), legend.title = "Pay_Label")
+C<-fviz_pca_biplot(clientpca, repel = T, label="var", habillage= client_numeric$pay_label, axes=c(1,4), legend.title = "Pay_Label")
+D<-fviz_pca_biplot(clientpca, repel = T, label="var", habillage= client_numeric$pay_label, axes=c(1,4), legend.title = "Pay_Label")
+
+#D<-fviz_cluster(clust_km_client, client.scaled, ellipse.type = "norm")
+#D2<-fviz_cluster(clust_km_client2, client.scaled2, ellipse.type = "norm")
+#D3<-fviz_cluster(clust_km_client3, client.scaled3, ellipse.type = "norm")
+
+A
+B
+C
+D
+
+```
+
+Dimensions 1 and 3 explain the most about the features 
+
+```{r}
+var <- get_pca_var(clientpca)
+
+dim1<-fviz_contrib(clientpca, choice = "var", axes = 1)
+dim2<-fviz_contrib(clientpca, choice = "var", axes = 2)
+dim3<-fviz_contrib(clientpca, choice = "var", axes = 3)
+dim4<-fviz_contrib(clientpca, choice = "var", axes = 4)
+dim5<-fviz_contrib(clientpca, choice = "var", axes = 5)
+
+library(patchwork)
+(dim1|dim2)
+(dim3|dim4)
+(dim5)
+
+```
+
+
+
+
+
+
+```{r PCA Scree}
+fviz_screeplot(clientpca,addlabels = TRUE) #elbow at 2
+```
+
+
+```{r eigenvalue}
+get_eigenvalue(clientpca)
+```
+
+### FA
+
+```{r FA}
+clientFA<-fa(client_numeric, nfactors=5,rotate="none")
+biplot.psych(clientFA,main="default settings")
+
+```
+
+
+```{r}
+clientFA$communalities
+clientFA$loadings 
+```
+
+
+```{r}
+range(clientFA$communalities)
+range(clientFA$loadings)
+
+client_numeric
+```
+
+
+```{r client_knn}
+library(class)
+set.seed(4636)
+N<-nrow(client_numeric) # set equal to the number of observations
+Ind<-sample(1:N,N*.8)
+# create your train, test, class (of training data) objects
+
+#train<-sort(Ind) can sort if required
+train<-client_numeric[Ind, -6]
+test<-client_numeric[-Ind, -6]
+class<-client_numeric[Ind, 6] #under/over/fair pay
+
+tryk2<-knn(train=train, test=test, cl=class, k = 2, prob=TRUE)
+tryk3<-knn(train=train, test=test, cl=class, k = 3, prob=TRUE)
+tryk4<-knn(train=train, test=test, cl=class, k = 4, prob=TRUE)
+tryk5<-knn(train=train, test=test, cl=class, k = 5, prob=TRUE)
+tryk6<-knn(train=train, test=test, cl=class, k = 6, prob=TRUE)
+
+```
+
+```{r}
+library(kableExtra)
+testClass<-client_numeric[-Ind, 6]
+
+tk2<-table(testClass,tryk2[1:length(testClass)])
+kbl(tk2)%>%kable_classic(full_width = F, html_font = "Cambria")
+tk3<-table(testClass,tryk3[1:length(testClass)])
+kbl(tk3)%>%kable_classic(full_width = F, html_font = "Cambria")
+tk4<-table(testClass,tryk4[1:length(testClass)])
+kbl(tk4)%>%kable_classic(full_width = F, html_font = "Cambria")
+tk5<-table(testClass,tryk5[1:length(testClass)])
+kbl(tk5)%>%kable_classic(full_width = F, html_font = "Cambria")
+tk6<-table(testClass,tryk6[1:length(testClass)])
+kbl(tk6)%>%kable_classic(full_width = F, html_font = "Cambria")
+
+#0=under, 1=fair, 2=over
+```
+
+
+k=2, 5 identified incorrectly 
+k=3, 3 identified incorrectly 
+k=4, 4 identified incorrectly 
+k=5, 3 identified incorrectly 
+k=6, 2 identified incorrectly --> this is the best one **
+
+```{r client_mclust}
+library(mclust)
+clientMclustDA <- MclustDA(train, class, verbose=FALSE)
+t1<-summary(clientMclustDA, newdata=test, newclass=testClass)
+kbl(t1$tab.newdata)%>%kable_classic(full_width = F, html_font = "Cambria")
+```
+
+1 observation classified incorrectly, KMeans clust seems to be superior as apposed to KNN in this circumstance 
+
