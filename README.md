@@ -23,15 +23,15 @@ root
 │         └── app.ini, etl.py
 │ 
 ├── model
-|   └── feature_selection
-│         └── app_client_1_4.ini, app_client_1_5.ini, app_client_a.ini, app_client_extra.ini, fs_client1_5.py, fs_client_etra.ipynb, fs_generic.py
-|
-|   └── model_selection
-│         └── app.ini, model_selection.py
-|
-|   └── regressor
-│         └── data_adjustment.py, data_from_postgresql.py, outliers_treatment.py, regressor_model.py, regressor_nn.py
-|
+|   ├── feature_selection
+│   |       └── app_client_1_4.ini, app_client_1_5.ini, app_client_a.ini, app_client_extra.ini, fs_client1_5.py, fs_client_etra.ipynb, fs_generic.py
+|   |
+|   ├── model_selection
+│   |      └── app.ini, model_selection.py
+|   |
+|   ├──  regressor
+│   |      └── data_adjustment.py, data_from_postgresql.py, outliers_treatment.py, regressor_model.py, regressor_nn.py
+|   |
 |   └── rf_regressor
 │         └── app_client_1_4.ini, app_client_a.ini, app_client_extra.ini, rf_regress.py
   </pre>
