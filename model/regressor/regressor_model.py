@@ -55,8 +55,8 @@ from keras.layers import Dense
 #%%
 # connection to database
 try:
-    # I deleted my details, so just fill with yours :)
-    conn = psycopg2.connect(dbname='gapsquare', user=, host='127.0.0.1', port='5432',
+
+    conn = psycopg2.connect(dbname='', user=, host='', port='',
                             password=)
     print('Connection successful')
 
